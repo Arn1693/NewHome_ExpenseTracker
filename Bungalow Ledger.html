@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bungalow Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eceee9;--paper:#f8f9f6;--ink:#1b252b;--mute:#6b777b;--line:#d9ddd6;
+  --basalt:#1f2a31;--on-basalt:#f2f4ef;--gold:#e0a21c;--gold-ink:#6b4a00;--ok:#1f7a5c;
+  --c1:#e0a21c;--c2:#3f8f86;--c3:#c8674a;--c4:#5b6fa8;--c5:#8a9a4b;--c6:#a07ab0;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12181c;--paper:#1a2227;--ink:#e8ece6;--mute:#8d9a9e;--line:#2b363c;
+  --basalt:#0c1114;--on-basalt:#f2f4ef;--gold:#f0b33a;--gold-ink:#f0b33a;--ok:#4cc29b}}
+:root[data-theme="dark"]{--bg:#12181c;--paper:#1a2227;--ink:#e8ece6;--mute:#8d9a9e;--line:#2b363c;--basalt:#0c1114;--on-basalt:#f2f4ef;--gold:#f0b33a;--gold-ink:#f0b33a;--ok:#4cc29b}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 'Hanken Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 18px 60px}
+h1,h2,.num{font-family:'Bricolage Grotesque','Hanken Grotesk',sans-serif}
+.num{font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+
+/* hero */
+.hero{background:var(--basalt);color:var(--on-basalt);border-radius:28px;padding:34px 34px 30px;position:relative;overflow:hidden}
+.hero:before{content:'';position:absolute;inset:auto -60px -90px auto;width:360px;height:360px;border-radius:50%;
+  background:repeating-radial-gradient(circle,transparent 0 22px,rgba(224,162,28,.13) 22px 23px)}
+.hero>*{position:relative}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.hero h1{margin:0;font-size:15px;font-weight:600;color:rgba(242,244,239,.7);letter-spacing:.01em}
+.asof{font-size:13px;color:rgba(242,244,239,.6)}
+.total{font-size:clamp(46px,9vw,92px);font-weight:800;line-height:1;margin:22px 0 6px;color:var(--on-basalt)}
+.total small{font-size:.42em;color:var(--gold);margin-right:.08em;font-weight:700}
+.lede{margin:0;color:rgba(242,244,239,.65);max-width:46ch}
+.split{display:flex;gap:28px;margin-top:26px;flex-wrap:wrap}
+.split div{min-width:140px}
+.split span{display:block;font-size:12.5px;color:rgba(242,244,239,.55)}
+.split b{font-size:22px;font-weight:700}
+
+/* who got what */
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:22px;padding:26px;margin-top:18px}
+.panel h2{margin:0 0 4px;font-size:20px;font-weight:700;letter-spacing:-.02em}
+.panel .hint{margin:0 0 18px;color:var(--mute);font-size:13.5px}
+.bar{display:flex;height:16px;border-radius:99px;overflow:hidden;gap:3px;background:var(--line)}
+.bar i{display:block;height:100%;min-width:6px;transition:flex-grow .5s ease}
+.legend{list-style:none;margin:18px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px 26px}
+.legend li{display:flex;align-items:center;gap:10px;font-size:14px}
+.legend .dot{width:10px;height:10px;border-radius:50%;flex:none}
+.legend .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.legend .am{font-weight:700}
+.legend .pc{color:var(--mute);width:38px;text-align:right;font-size:13px}
+
+/* ledger */
+.head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.chips{display:flex;gap:6px}
+.chip{border:1px solid var(--line);background:transparent;color:var(--mute);padding:7px 14px;border-radius:99px;font:600 13px 'Hanken Grotesk',sans-serif;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--basalt);color:var(--on-basalt);border-color:var(--basalt)}
+.list{list-style:none;margin:0;padding:0}
+.row{display:grid;grid-template-columns:58px 1fr auto;gap:6px 16px;align-items:center;padding:16px 4px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.day{text-align:center;line-height:1.05}
+.day b{display:block;font:800 26px 'Bricolage Grotesque',sans-serif;letter-spacing:-.04em}
+.day span{font-size:12px;color:var(--mute);font-weight:600}
+.who{font-weight:600;font-size:15.5px;overflow-wrap:anywhere}
+.meta{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;margin-top:3px;font-size:12.5px;color:var(--mute)}
+.mode{border:1px solid var(--line);border-radius:6px;padding:1px 8px;font-weight:600;color:var(--ink)}
+.mode.cash{border-color:var(--gold);color:var(--gold-ink)}
+.tag{color:var(--c3);font-weight:600}
+.amt{text-align:right;font-size:20px;font-weight:700}
+.del{border:0;background:none;color:var(--mute);font-size:12px;cursor:pointer;text-decoration:underline;padding:2px 0;display:block;margin-left:auto}
+.empty{color:var(--mute);padding:26px 0;text-align:center}
+
+/* buttons */
+.btn{border:0;border-radius:12px;padding:12px 18px;font:700 14px 'Hanken Grotesk',sans-serif;cursor:pointer;color:var(--ink);background:var(--line)}
+.btn.main{background:var(--gold);color:#201600}
+.btn.ghost{background:transparent;border:1px solid var(--line)}
+.btn.warn{background:transparent;color:#b6534b;border:1px solid var(--line)}
+.btn:focus-visible,.chip:focus-visible,.del:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.tools{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+
+/* dialog */
+dialog{border:1px solid var(--line);border-radius:24px;background:var(--paper);color:var(--ink);padding:26px;width:min(520px,calc(100% - 28px));box-shadow:0 30px 80px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(10,14,16,.55);backdrop-filter:blur(3px)}
+dialog[open]{animation:pop .22s ease}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+dialog h2{margin:0 0 16px;font-size:22px;letter-spacing:-.02em}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.f.full{grid-column:1/-1}
+.f label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+.f input,.f select{width:100%;padding:12px 13px;border-radius:11px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.acts{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
+.seg label{margin:0;text-align:center;padding:9px 6px;border-radius:9px;cursor:pointer;font-size:13.5px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg input:checked+span{background:var(--basalt);color:var(--on-basalt)}
+.seg span{display:block;padding:9px 6px;border-radius:9px;text-align:center}
+.seg input:focus-visible+span{outline:3px solid var(--gold)}
+.foot{text-align:center;color:var(--mute);font-size:12.5px;margin-top:28px}
+
+@media (max-width:600px){
+  .hero{padding:26px 22px;border-radius:22px}.panel{padding:20px;border-radius:18px}
+  .row{grid-template-columns:46px 1fr auto;gap:4px 12px}.amt{font-size:17px}.grid{grid-template-columns:1fr}
+}
+@media print{
+  body{background:#fff;color:#000}.no-print{display:none!important}
+  .hero{-webkit-print-color-adjust:exact;print-color-adjust:exact}.panel{break-inside:avoid}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="hero-top">
+      <h1>Bungalow purchase ledger</h1>
+      <div class="asof" id="asOf"></div>
+    </div>
+    <div class="total num" id="total"></div>
+    <p class="lede" id="lede"></p>
+    <div class="split">
+      <div><span>Paid to builder</span><b class="num" id="builder"></b></div>
+      <div><span>Other expenses</span><b class="num" id="other"></b></div>
+      <div><span>Payments recorded</span><b class="num" id="count"></b></div>
+    </div>
+  </header>
+
+  <section class="panel">
+    <h2>Who has been paid</h2>
+    <p class="hint">Share of the total, by person.</p>
+    <div class="bar" id="bar" role="img" aria-label="Share of payments by person"></div>
+    <ul class="legend" id="legend"></ul>
+  </section>
+
+  <section class="panel">
+    <div class="head">
+      <h2 style="margin:0">All payments</h2>
+      <div class="chips no-print" role="group" aria-label="Filter">
+        <button class="chip" data-f="all" aria-pressed="true">All</button>
+        <button class="chip" data-f="Builder Payment" aria-pressed="false">Builder</button>
+        <button class="chip" data-f="Other Expense" aria-pressed="false">Other</button>
+      </div>
+    </div>
+    <ul class="list" id="list"></ul>
+    <div class="tools no-print">
+      <button class="btn main" id="openAdd">Add payment</button>
+      <button class="btn ghost" id="csv">Export CSV</button>
+      <button class="btn ghost" id="print">Print or save as PDF</button>
+      <button class="btn warn" id="reset">Remove added entries</button>
+    </div>
+  </section>
+  <p class="foot">Keep bank confirmations, invoices and cash receipts safe. All amounts are in Indian rupees.</p>
+</div>
+
+<dialog id="dlg">
+  <h2>Add a payment</h2>
+  <form id="form">
+    <div class="grid">
+      <div class="f full">
+        <div class="seg">
+          <label><input type="radio" name="type" value="Builder Payment" checked><span>Paid to builder</span></label>
+          <label><input type="radio" name="type" value="Other Expense"><span>Other expense</span></label>
+        </div>
+      </div>
+      <div class="f"><label for="date">Date</label><input id="date" type="date" required></div>
+      <div class="f"><label for="amount">Amount (₹)</label><input id="amount" type="number" inputmode="numeric" min="1" step="1" placeholder="50000" required></div>
+      <div class="f"><label for="mode">Payment mode</label>
+        <select id="mode"><option>GPay</option><option>IMPS</option><option>NEFT</option><option>RTGS</option><option>Cash</option><option>Cheque</option><option>Other</option></select></div>
+      <div class="f"><label for="who">Paid to</label><input id="who" placeholder="Name or expense, e.g. Registration"></div>
+      <div class="f full"><label for="ref">Reference or remarks</label><input id="ref" placeholder="UTR, transaction ID or receipt details"></div>
+    </div>
+    <div class="acts">
+      <button class="btn ghost" type="button" id="cancel">Cancel</button>
+      <button class="btn main" type="submit">Save payment</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+var initial=[
+ {date:'2026-09-26',type:'Builder Payment',mode:'Cash',recipient:'—',reference:'Cash payment',amount:40000},
+ {date:'2026-10-19',type:'Builder Payment',mode:'GPay',recipient:'Babasaheb Shelke',reference:'629240439605',amount:45000},
+ {date:'2026-10-19',type:'Builder Payment',mode:'GPay',recipient:'Babasaheb Shelke',reference:'629240499388',amount:15000},
+ {date:'2026-11-05',type:'Builder Payment',mode:'GPay',recipient:'Sopan Najan',reference:'630970940931',amount:45000},
+ {date:'2026-11-06',type:'Builder Payment',mode:'GPay',recipient:'Sopan Najan',reference:'631016536669',amount:45000},
+ {date:'2026-11-06',type:'Builder Payment',mode:'GPay',recipient:'Arun Warule',reference:'631016795838',amount:30000},
+ {date:'2026-11-20',type:'Builder Payment',mode:'IMPS',recipient:'Vijay Japkar',reference:'632415917918',amount:500000}
+];
+var KEY='bungalowAddedPayments',added=[],filter='all';
+try{added=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){added=[]}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(added))}catch(e){}}
+var $=function(id){return document.getElementById(id)};
+var money=function(n){return '₹'+Number(n).toLocaleString('en-IN',{maximumFractionDigits:0})};
+function esc(v){return String(v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function all(){
+  var a=initial.map(function(p,i){return Object.assign({},p,{src:'i',idx:i})});
+  var b=added.map(function(p,i){return Object.assign({},p,{src:'a',idx:i})});
+  return a.concat(b).sort(function(x,y){return x.date<y.date?1:x.date>y.date?-1:0});
+}
+function parts(s){var d=new Date(s+'T00:00:00');return{d:d.getDate(),m:d.toLocaleDateString('en-IN',{month:'short',year:'numeric'})}}
+function render(){
+  var rows=all(),sum=function(t){return rows.filter(function(p){return p.type===t}).reduce(function(s,p){return s+Number(p.amount)},0)};
+  var bld=sum('Builder Payment'),oth=sum('Other Expense'),tot=bld+oth;
+  $('total').innerHTML='<small>₹</small>'+tot.toLocaleString('en-IN');
+  $('builder').textContent=money(bld);$('other').textContent=money(oth);$('count').textContent=rows.length;
+  $('asOf').textContent='As of '+new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+  var first=rows.length?parts(rows[rows.length-1].date):null;
+  $('lede').textContent=rows.length?('Spent across '+rows.length+' payments since '+first.d+' '+first.m+'.'):'No payments recorded yet.';
+
+  // payee share
+  var by={};rows.forEach(function(p){var k=(p.recipient&&p.recipient!=='—')?p.recipient:(p.mode==='Cash'?'Cash (name not noted)':'Not noted');by[k]=(by[k]||0)+Number(p.amount)});
+  var names=Object.keys(by).sort(function(a,b){return by[b]-by[a]});
+  $('bar').innerHTML=names.map(function(n,i){return '<i title="'+esc(n)+'" style="flex-grow:'+by[n]+';background:var(--c'+(i%6+1)+')"></i>'}).join('');
+  $('legend').innerHTML=names.map(function(n,i){return '<li><span class="dot" style="background:var(--c'+(i%6+1)+')"></span><span class="nm">'+esc(n)+'</span><span class="am num">'+money(by[n])+'</span><span class="pc">'+Math.round(by[n]/tot*100)+'%</span></li>'}).join('');
+
+  // list
+  var vis=rows.filter(function(p){return filter==='all'||p.type===filter});
+  $('list').innerHTML=vis.length?vis.map(function(p){
+    var d=parts(p.date),who=(p.recipient&&p.recipient!=='—')?p.recipient:(p.type==='Other Expense'?'Expense':'Name not noted');
+    return '<li class="row"><div class="day"><b>'+d.d+'</b><span>'+esc(d.m)+'</span></div>'+
+      '<div><div class="who">'+esc(who)+'</div><div class="meta"><span class="mode'+(p.mode==='Cash'?' cash':'')+'">'+esc(p.mode)+'</span>'+
+      (p.type==='Other Expense'?'<span class="tag">Other expense</span>':'')+
+      (p.reference&&p.reference!=='—'?'<span>'+esc(p.reference)+'</span>':'')+'</div></div>'+
+      '<div><div class="amt num">'+money(p.amount)+'</div>'+(p.src==='a'?'<button class="del no-print" data-i="'+p.idx+'">Delete</button>':'')+'</div></li>';
+  }).join(''):'<li class="empty">Nothing here yet. Add a payment to get started.</li>';
+}
+document.querySelectorAll('.chip').forEach(function(c){c.onclick=function(){
+  filter=c.dataset.f;document.querySelectorAll('.chip').forEach(function(x){x.setAttribute('aria-pressed',x===c)});render()}});
+$('list').addEventListener('click',function(e){var b=e.target.closest('.del');if(!b)return;
+  if(confirm('Delete this entry?')){added.splice(+b.dataset.i,1);save();render()}});
+var dlg=$('dlg');
+$('openAdd').onclick=function(){$('date').value=new Date().toISOString().slice(0,10);dlg.showModal()};
+$('cancel').onclick=function(){dlg.close()};
+$('form').addEventListener('submit',function(e){e.preventDefault();
+  var amt=Number($('amount').value);if(!$('date').value||amt<=0)return;
+  added.push({date:$('date').value,type:document.querySelector('input[name=type]:checked').value,amount:amt,mode:$('mode').value,
+    recipient:$('who').value.trim()||'—',reference:$('ref').value.trim()||'—'});
+  save();e.target.reset();dlg.close();render()});
+$('reset').onclick=function(){if(confirm('Remove every payment added on this page? The original seven stay.')){added=[];save();render()}};
+$('print').onclick=function(){window.print()};
+$('csv').onclick=function(){
+  var r=[['Date','Entry type','Mode','Paid to','Reference','Amount']].concat(all().reverse().map(function(p){return[p.date,p.type,p.mode,p.recipient,p.reference,p.amount]}));
+  var csv=r.map(function(x){return x.map(function(v){return '"'+String(v).replace(/"/g,'""')+'"'}).join(',')}).join('\n');
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='bungalow_ledger.csv';a.click();URL.revokeObjectURL(a.href)};
+render();
+</script>
+</body>
+</html>
